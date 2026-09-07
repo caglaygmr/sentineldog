@@ -1,0 +1,21 @@
+[Unit]
+Description=SentinelDog Linux Security Watchdog & Rootkit Sentinel
+Documentation=https://github.com/caglayagmuryaylaci/sentineldog
+After=network.target auditd.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/sentineldog
+ExecStart=/opt/sentineldog/.venv/bin/sentineldog watch --config /opt/sentineldog/config/watchdog.yaml
+Restart=always
+RestartSec=5
+KillMode=process
+
+# Security Hardening for System Daemon
+ProtectControlGroups=true
+ProtectKernelTunables=false # Needs access to /proc/sys/kernel/tainted
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

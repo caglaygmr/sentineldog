@@ -1,0 +1,60 @@
+# SentinelDog Configuration
+# Production-ready Security Watchdog & Rootkit Cross-View Sentinel
+
+general:
+  service_name: "sentineldog"
+  check_interval_seconds: 5       # Fast loop tick (seconds)
+  deep_scan_interval_seconds: 30  # Deep rootkit & FIM scan frequency (seconds)
+  log_level: "INFO"
+
+alerts:
+  console_output: true
+  json_log_path: "logs/incidents.json"
+  webhook_url: null               # Discord / Telegram / Slack webhook URL (optional)
+  syslog_facility: "LOG_SECURITY"
+
+rootkit_detection:
+  enabled: true
+  enable_cross_view: true         # Compare userland ps/psutil vs /proc vs kill(pid, 0)
+  enable_ld_preload: true         # Check /etc/ld.so.preload and process environments
+  enable_kernel_modules: true     # Check /proc/modules vs /sys/module/ & kernel tainted
+  enable_hidden_network: true     # Compare /proc/net/tcp against socket bindings
+  max_pid_sweep: 65535            # Range for low-level PID probing (default 65535)
+
+file_integrity:
+  enabled: true
+  baseline_path: "data/fim_baseline.json"
+  monitored_paths:
+    - "/etc/passwd"
+    - "/etc/shadow"
+    - "/etc/sudoers"
+    - "/etc/ld.so.preload"
+    - "/etc/ld.so.conf"
+    - "/etc/crontab"
+    - "/bin/ps"
+    - "/bin/ls"
+    - "/bin/netstat"
+    - "/bin/ss"
+    - "/bin/login"
+    - "/usr/bin/sudo"
+    - "/usr/bin/ssh"
+  exclude_patterns:
+    - "*.swp"
+    - "*~"
+
+log_sentinel:
+  enabled: true
+  target_logs:
+    - "/var/log/auth.log"
+    - "/var/log/secure"
+    - "/var/log/syslog"
+  rules:
+    ssh_brute_force:
+      threshold: 5
+      window_seconds: 60
+    privilege_escalation:
+      alert_on_sudo_failure: true
+      sudo_fail_threshold: 3
+    account_tampering:
+      detect_useradd: true
+      detect_uid0: true

@@ -1,0 +1,17 @@
+services:
+  sentineldog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentineldog-sentinel
+    pid: "host" # Shares host PID namespace for realistic cross-view process detection
+    cap_add:
+      - SYS_PTRACE
+      - DAC_READ_SEARCH
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
+      - /var/log:/var/log:ro
+    command: ["watch"]
+    restart: unless-stopped

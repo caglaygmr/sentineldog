@@ -1,0 +1,45 @@
+# SentinelDog Detection Signatures & Indicators of Compromise (IoCs)
+
+rootkit_signatures:
+  # Known malicious kernel modules / rootkit artifacts
+  known_modules:
+    - "diamorphine"
+    - "reptile"
+    - "suterusu"
+    - "kbeast"
+    - "adore"
+    - "knark"
+    - "vlany"
+    - "mood-nt"
+    - "rk"
+    - "mafix"
+
+  # Known suspicious files and rootkit dropper directories
+  suspicious_files:
+    - "/etc/ld.so.preload"
+    - "/dev/shm/...*"
+    - "/tmp/...*"
+    - "/var/tmp/...*"
+    - "/etc/rc.d/init.d/kbeast"
+
+  # Known suspicious process names often masked
+  suspicious_proc_names:
+    - "[kworker/0:0H]"     # Sometimes mimicked improperly
+    - "kthreaddk"
+    - "syslogd_crypt"
+    - "miner"
+    - "xmrig"
+
+log_signatures:
+  ssh_failed:
+    - "Failed password for (?:invalid user )?(?P<user>\\S+) from (?P<ip>[0-9a-fA-F:.]+) port (?P<port>\\d+)"
+    - "authentication failure;.*rhost=(?P<ip>[0-9a-fA-F:.]+).*user=(?P<user>\\S*)"
+  ssh_accepted:
+    - "Accepted password for (?P<user>\\S+) from (?P<ip>[0-9a-fA-F:.]+) port (?P<port>\\d+)"
+    - "Accepted publickey for (?P<user>\\S+) from (?P<ip>[0-9a-fA-F:.]+) port (?P<port>\\d+)"
+  sudo_failure:
+    - "sudo:.*(?P<count>\\d+) incorrect password attempt"
+    - "sudo:.*authentication failure"
+  account_created:
+    - "new user: name=(?P<user>\\S+), UID=(?P<uid>\\d+)"
+    - "useradd.*name=(?P<user>\\S+)"
