@@ -110,7 +110,7 @@ flowchart TD
 
 ```bash
 # Clone the repository
-git clone https://github.com/caglayagmuryaylaci/sentineldog.git
+git clone https://github.com/caglaygmr/sentineldog.git
 cd sentineldog
 
 # Create and activate virtual environment
