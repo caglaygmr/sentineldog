@@ -128,22 +128,27 @@ class CrossViewDetector:
                     )
                 )
 
-        # Discrepancy Check 2: Kernel Syscall vs /proc Directory Listing
-        # If full_sweep is requested or system has /proc
+        # Discrepancy Check 2: Kernel Syscall vs Visible Process Tables (/proc & userland)
         sweep_limit = self.max_pid if full_sweep else min(self.max_pid, 10000)
         syscall_pids = self.sweep_syscall_pids(sweep_limit)
 
-        # PIDs that respond to kill(0) but are NOT listed in /proc directory!
-        hidden_from_proc = syscall_pids - proc_pids
-        if hidden_from_proc:
-            # Re-check to eliminate process termination race conditions
+        # A truly stealth rootkit process responds to kill(0) but is completely
+        # missing from /proc directory entries AND standard userland process listings.
+        visible_pids = proc_pids.union(userland_pids)
+        if not visible_pids:
+            return incidents
+
+        hidden_from_visible = syscall_pids - visible_pids
+        if hidden_from_visible:
+            # Re-check after brief delay to eliminate process termination race conditions
             time.sleep(0.05)
             confirmed_stealth = set()
-            for pid in hidden_from_proc:
+            for pid in hidden_from_visible:
                 try:
                     os.kill(pid, 0)
-                    # Still alive, but is it still missing from /proc?
-                    if not Path(f"/proc/{pid}").is_dir():
+                    # Re-verify it still exists in kernel but is still omitted from visible tables
+                    rechecked_visible = self.get_proc_dir_pids().union(self.get_psutil_pids())
+                    if pid not in rechecked_visible:
                         confirmed_stealth.add(pid)
                 except OSError:
                     pass
@@ -156,7 +161,7 @@ class CrossViewDetector:
                         title="Critical Stealth Process Detected (Kernel Rootkit getdents Hook)",
                         details={
                             "stealth_pids": sorted(list(confirmed_stealth)),
-                            "detection_technique": "kill(pid, 0) succeeded but PID missing from /proc directory entries",
+                            "detection_technique": "kill(pid, 0) succeeded but PID missing from process tables",
                             "suspected_mechanism": "sys_getdents64 interception hiding kernel task structures",
                             "count": len(confirmed_stealth),
                         },
